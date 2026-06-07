@@ -8,6 +8,8 @@ load_dotenv()
 from routes.generate import router as generate_router
 from routes.modify import router as modify_router
 from routes.version import router as version_router
+from routes.auth import router as auth_router
+from routes.diagram import router as diagram_router
 from services import mongodb_service
 
 
@@ -36,7 +38,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "http://127.0.0.1:5173",
         "http://localhost:3000",
+        "http://127.0.0.1:3000",
         # Add your Vercel URL here before deploying
         # "https://flowforge-ai.vercel.app",
     ],
@@ -46,6 +50,8 @@ app.add_middleware(
 )
 
 # ── Register all routers ──────────────────────────────────────────────────────
+app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
+app.include_router(diagram_router, prefix="/api/diagram", tags=["diagram"])
 app.include_router(generate_router, prefix="/api")
 app.include_router(modify_router, prefix="/api")
 app.include_router(version_router, prefix="/api")

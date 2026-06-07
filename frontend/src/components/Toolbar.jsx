@@ -1,27 +1,26 @@
 import { useState, useCallback } from 'react';
 import useDiagramStore from '../store/diagramStore';
+import { toPng, toSvg } from 'html-to-image';
+import { 
+  Monitor, Server, Database, Sparkles, HardDrive, 
+  ShieldCheck, Bell, Network, Cloud, User 
+} from 'lucide-react';
 
 const NODE_TYPES = [
-  { id: 'process', label: 'Process', icon: '⬜', description: 'General process step' },
-  { id: 'database', label: 'Database', icon: '🗄️', description: 'Data storage' },
-  { id: 'api', label: 'API', icon: '⚡', description: 'API endpoint or service' },
-  { id: 'decision', label: 'Decision', icon: '◇', description: 'Decision point' },
-  { id: 'start', label: 'Start/End', icon: '⬭', description: 'Flow start or end' },
-];
-
-const COLOR_PRESETS = [
-  { bg: '#6366f1', border: '#4f46e5', name: 'Indigo' },
-  { bg: '#8b5cf6', border: '#7c3aed', name: 'Violet' },
-  { bg: '#06b6d4', border: '#0891b2', name: 'Cyan' },
-  { bg: '#10b981', border: '#059669', name: 'Emerald' },
-  { bg: '#f59e0b', border: '#d97706', name: 'Amber' },
-  { bg: '#ef4444', border: '#dc2626', name: 'Red' },
-  { bg: '#ec4899', border: '#db2777', name: 'Pink' },
-  { bg: '#64748b', border: '#475569', name: 'Slate' },
+  { id: 'user', label: 'User / Client', icon: <User size={14} />, description: 'End user or client application' },
+  { id: 'frontend', label: 'Frontend', icon: <Monitor size={14} />, description: 'Web or mobile interface' },
+  { id: 'backend', label: 'Backend API', icon: <Server size={14} />, description: 'Core application logic' },
+  { id: 'database', label: 'Database', icon: <Database size={14} />, description: 'Data storage' },
+  { id: 'storage', label: 'Cloud Storage', icon: <HardDrive size={14} />, description: 'Object or file storage' },
+  { id: 'ai', label: 'AI Service', icon: <Sparkles size={14} />, description: 'LLM or ML model' },
+  { id: 'gateway', label: 'API Gateway', icon: <Network size={14} />, description: 'Routing and rate limiting' },
+  { id: 'security', label: 'Auth / Security', icon: <ShieldCheck size={14} />, description: 'Authentication provider' },
+  { id: 'notification', label: 'Notification', icon: <Bell size={14} />, description: 'Email or SMS service' },
+  { id: 'cloud', label: 'External Cloud', icon: <Cloud size={14} />, description: 'Third-party cloud service' },
 ];
 
 export default function Toolbar({ onAddNode }) {
-  const [selectedType, setSelectedType] = useState('process');
+  const [selectedType, setSelectedType] = useState('service');
   const [isExpanded, setIsExpanded] = useState(true);
   const { clearDiagram, nodes, edges } = useDiagramStore();
 
@@ -31,23 +30,51 @@ export default function Toolbar({ onAddNode }) {
     }
   }, [selectedType, onAddNode]);
 
-  const handleExport = useCallback(() => {
+  const handleExportJson = useCallback(() => {
     const snapshot = { nodes, edges };
     const json = JSON.stringify(snapshot, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'flowforge-diagram.json';
+    a.download = 'flowforge-architecture.json';
     a.click();
     URL.revokeObjectURL(url);
   }, [nodes, edges]);
+
+  const handleExportImage = useCallback(async (format) => {
+    const element = document.querySelector('.react-flow');
+    if (!element) return;
+    
+    try {
+      // Temporarily hide controls for export
+      const controls = element.querySelector('.flow-controls');
+      const minimap = element.querySelector('.flow-minimap');
+      if (controls) controls.style.display = 'none';
+      if (minimap) minimap.style.display = 'none';
+
+      const dataUrl = format === 'png' 
+        ? await toPng(element, { backgroundColor: '#0f172a' })
+        : await toSvg(element, { backgroundColor: '#0f172a' });
+        
+      if (controls) controls.style.display = '';
+      if (minimap) minimap.style.display = '';
+
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = `flowforge-architecture.${format}`;
+      a.click();
+    } catch (err) {
+      console.error('Failed to export', err);
+      alert('Export failed. Diagram might be too large or contain unsupported elements.');
+    }
+  }, []);
 
   return (
     <aside className="toolbar-panel">
       {/* Header */}
       <div className="toolbar-header">
-        <span className="toolbar-title">Tools</span>
+        <span className="toolbar-title">Architecture</span>
         <button
           id="toolbar-toggle"
           className="icon-btn"
@@ -61,8 +88,8 @@ export default function Toolbar({ onAddNode }) {
       {isExpanded && (
         <>
           {/* Node Types */}
-          <div className="toolbar-section">
-            <p className="section-label">Node Type</p>
+          <div className="toolbar-section" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+            <p className="section-label">Components</p>
             <div className="node-type-list">
               {NODE_TYPES.map((nt) => (
                 <button
@@ -86,7 +113,7 @@ export default function Toolbar({ onAddNode }) {
               className="primary-btn full-width"
               onClick={handleAddNode}
             >
-              <span>＋</span> Add Node
+              <span>＋</span> Add Component
             </button>
           </div>
 
@@ -95,12 +122,26 @@ export default function Toolbar({ onAddNode }) {
 
           {/* Actions */}
           <div className="toolbar-section">
-            <p className="section-label">Actions</p>
+            <p className="section-label">Export & Actions</p>
+            <button
+              className="secondary-btn full-width"
+              onClick={() => handleExportImage('png')}
+              title="Export diagram as PNG image"
+            >
+              🖼️ Export PNG
+            </button>
+            <button
+              className="secondary-btn full-width"
+              onClick={() => handleExportImage('svg')}
+              title="Export diagram as vector SVG"
+            >
+              📐 Export SVG
+            </button>
             <button
               id="export-btn"
               className="secondary-btn full-width"
-              onClick={handleExport}
-              title="Export diagram as JSON"
+              onClick={handleExportJson}
+              title="Export diagram as raw JSON"
             >
               ↓ Export JSON
             </button>
@@ -108,11 +149,12 @@ export default function Toolbar({ onAddNode }) {
               id="clear-diagram-btn"
               className="danger-btn full-width"
               onClick={() => {
-                if (window.confirm('Clear all nodes and edges?')) {
+                if (window.confirm('Clear all components and connections?')) {
                   clearDiagram();
                 }
               }}
               title="Clear entire diagram"
+              style={{ marginTop: '4px' }}
             >
               ✕ Clear All
             </button>

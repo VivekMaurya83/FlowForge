@@ -23,15 +23,27 @@ const NODE_TYPES = [
 ];
 
 function NodeProperties({ node }) {
-  const { updateNodeLabel, updateNodeColor, updateNodeType, removeNode } = useDiagramStore();
+  const { updateNodeLabel, updateNodeDescription, updateNodeColor, updateNodeType, removeNode } = useDiagramStore();
   const [label, setLabel] = useState(node.data.label);
+  const [description, setDescription] = useState(node.data.description || '');
   const inputRef = useRef(null);
 
-  useEffect(() => { setLabel(node.data.label); }, [node.id, node.data.label]);
+  useEffect(() => { 
+    setLabel(node.data.label); 
+    setDescription(node.data.description || '');
+  }, [node.id, node.data.label, node.data.description]);
 
   const handleLabelBlur = () => {
     if (label.trim()) updateNodeLabel(node.id, label.trim());
     else setLabel(node.data.label);
+  };
+
+  const handleDescriptionBlur = () => {
+    if (description.trim() !== (node.data.description || '')) {
+      updateNodeDescription(node.id, description.trim());
+    } else {
+      setDescription(node.data.description || '');
+    }
   };
 
   return (
@@ -51,6 +63,20 @@ function NodeProperties({ node }) {
           }}
           placeholder="Node label..."
           maxLength={60}
+        />
+      </div>
+
+      <div className="property-group">
+        <label className="property-label" htmlFor="node-desc-input">Description</label>
+        <textarea
+          id="node-desc-input"
+          className="property-input"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={handleDescriptionBlur}
+          placeholder="Node description..."
+          rows={3}
+          style={{ resize: 'vertical' }}
         />
       </div>
 

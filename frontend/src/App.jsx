@@ -1,47 +1,38 @@
-import { useCallback } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
-import Navbar from './components/Navbar';
-import Toolbar from './components/Toolbar';
-import Sidebar from './components/Sidebar';
-import DiagramCanvas from './components/DiagramCanvas';
-import PromptBox from './components/PromptBox';
-import useDiagramStore from './store/diagramStore';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import useAuthStore from './store/authStore';
+
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage';
+import EditorPage from './pages/EditorPage';
+import ProtectedRoute from './components/ProtectedRoute';
+
 import './App.css';
 
 export default function App() {
-  const { addNode } = useDiagramStore();
+  const { fetchUser, token } = useAuthStore();
 
-  const handleAddNode = useCallback(
-    (type) => {
-      addNode(type);
-    },
-    [addNode]
-  );
+  // Hydrate user on mount if token exists
+  useEffect(() => {
+    if (token) {
+      fetchUser();
+    }
+  }, [token, fetchUser]);
 
   return (
-    <ReactFlowProvider>
-      <div className="app-shell">
-        {/* Top navbar */}
-        <Navbar />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
-        {/* Main content area */}
-        <div className="app-body">
-          {/* Left toolbar */}
-          <Toolbar onAddNode={handleAddNode} />
-
-          {/* Center canvas */}
-          <main className="canvas-area">
-            <DiagramCanvas onAddNode={handleAddNode} />
-          </main>
-
-          {/* Right sidebar */}
-          <Sidebar />
-        </div>
-
-        {/* Bottom prompt bar — Phase 2+ fully active */}
-        <PromptBox />
-      </div>
-    </ReactFlowProvider>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/editor/:diagramId" element={<EditorPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-

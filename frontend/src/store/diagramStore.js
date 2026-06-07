@@ -139,6 +139,10 @@ const useDiagramStore = create((set, get) => ({
     set({ nodes: get().nodes.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, label: newLabel } } : n) });
   },
 
+  updateNodeDescription: (nodeId, description) => {
+    set({ nodes: get().nodes.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, description, userEditedDescription: true } } : n) });
+  },
+
   updateNodeColor: (nodeId, color) => {
     set({ nodes: get().nodes.map((n) => n.id === nodeId ? { ...n, data: { ...n.data, color } } : n) });
   },
@@ -162,8 +166,50 @@ const useDiagramStore = create((set, get) => ({
   clearDiagram: () => set({ nodes: [], edges: [], selectedNodeId: null, selectedEdgeId: null }),
 
   // ── Load / snapshot ────────────────────────────────────────────────────────
-  loadDiagram: (nodes, edges) => {
-    set({ nodes: nodes.map(ensureNodeType), edges: edges.map(ensureEdgeStyle), selectedNodeId: null, selectedEdgeId: null });
+  loadDiagram: (id, title, nodes, edges) => {
+    set({
+      diagramId: id,
+      diagramTitle: title,
+      nodes: (nodes || []).map(ensureNodeType),
+      edges: (edges || []).map(ensureEdgeStyle),
+      selectedNodeId: null,
+      selectedEdgeId: null,
+    });
+  },
+
+  loadDiagramFromApi: async (id) => {
+    set({ isLoading: true, aiError: null });
+    try {
+      const { api } = await import('./authStore');
+      const res = await api.get(`/diagram/${id}`);
+      const d = res.data;
+      set({
+        diagramId: d.id,
+        diagramTitle: d.title,
+        nodes: (d.nodes || []).map(ensureNodeType),
+        edges: (d.edges || []).map(ensureEdgeStyle),
+        isLoading: false,
+      });
+      get().fetchVersions();
+    } catch (err) {
+      set({ isLoading: false, aiError: 'Failed to load diagram' });
+    }
+  },
+
+  autoSaveDiagram: async () => {
+    const { diagramId, diagramTitle, nodes, edges, isLoading } = get();
+    // Don't save if no diagram is loaded, or if we're still loading from API
+    if (!diagramId || isLoading) return;
+    try {
+      const { api } = await import('./authStore');
+      await api.put(`/diagram/${diagramId}`, {
+        title: diagramTitle,
+        nodes,
+        edges,
+      });
+    } catch (err) {
+      console.error('Auto-save failed', err);
+    }
   },
 
   getDiagramSnapshot: () => {
@@ -191,6 +237,12 @@ const useDiagramStore = create((set, get) => ({
     set({ isLoading: true, aiError: null, lastPrompt: prompt });
     try {
       const result = await generateDiagram(prompt);
+      
+      // Safety check to debug exactly what `result` is
+      if (!result || !result.nodes) {
+        throw new Error(`Unexpected API response: ${JSON.stringify(result)}`);
+      }
+      
       const nodes = result.nodes.map(ensureNodeType);
       const edges = result.edges.map(ensureEdgeStyle);
       set({
@@ -244,9 +296,18 @@ const useDiagramStore = create((set, get) => ({
     updatedNodes = updatedNodes.map((n) => {
       const update = nodes_to_update.find((u) => u.id === n.id);
       if (!update) return n;
+      
+      const newData = { ...n.data, ...(update.data || {}) };
+      
+      // Preserve manual description edits if present
+      if (n.data.userEditedDescription) {
+        newData.description = n.data.description;
+        newData.userEditedDescription = true;
+      }
+      
       return {
         ...n,
-        data: { ...n.data, ...(update.data || {}) },
+        data: newData,
         // position is intentionally NOT updated — preserves manual layout
       };
     });
@@ -300,9 +361,11 @@ const useDiagramStore = create((set, get) => ({
     set({ versionsLoading: true });
     try {
       const data = await restoreVersion(versionId);
-      const { nodes, edges, title } = data.diagram;
-      get().loadDiagram(nodes, edges);
-      if (title) set({ diagramTitle: title });
+      // data.diagram is the saved version doc: { diagram_id, title, nodes, edges, ... }
+      const versionDoc = data.diagram;
+      const { diagram_id, title, nodes, edges } = versionDoc;
+      // loadDiagram(id, title, nodes, edges) — all four args required
+      get().loadDiagram(diagram_id, title, nodes, edges);
       set({ versionsLoading: false });
       return { success: true };
     } catch (err) {

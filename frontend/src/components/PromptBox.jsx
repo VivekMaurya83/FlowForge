@@ -97,7 +97,7 @@ export default function PromptBox() {
         </div>
 
         {/* Input */}
-        <input
+        <textarea
           ref={inputRef}
           id="prompt-input"
           className="prompt-input"
@@ -105,8 +105,12 @@ export default function PromptBox() {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
+          onInput={(e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = `${e.target.scrollHeight}px`;
+          }}
           disabled={isLoading}
-          maxLength={500}
+          rows={1}
           autoComplete="off"
         />
 

@@ -25,7 +25,7 @@ import google.generativeai as genai
 GEMINI_MODEL = "gemini-3-flash-preview"
 
 SYSTEM_PROMPT_GENERATE = """
-You are a diagram architecture expert. Given a description, produce a JSON diagram.
+You are a Cloud Architecture Diagram Expert. Given a description, produce a JSON diagram.
 Return ONLY valid JSON — no markdown, no explanation, no code fences.
 
 Use this exact structure:
@@ -36,9 +36,10 @@ Use this exact structure:
       "type": "editableNode",
       "position": { "x": <number>, "y": <number> },
       "data": {
-        "label": "Display Name",
-        "nodeType": "process|database|api|decision|start|end",
-        "color": { "bg": "#hexcolor", "border": "#hexcolor" }
+        "label": "Component Name",
+        "category": "user|frontend|backend|database|storage|ai|service|cloud|notification|gateway|security",
+        "description": "Short description of purpose",
+        "size": "normal" // use "large" only for the 2-3 most critical workflow nodes
       }
     }
   ],
@@ -54,30 +55,41 @@ Use this exact structure:
   ]
 }
 
-Layout guidelines:
-- Space nodes at least 220px apart horizontally, 160px vertically
-- Left-to-right flow for sequential architectures
-- Top-down for hierarchical architectures
-- Position x: 80-1300, y: 80-700
-- Use meaningful IDs like "frontend", "backend", "database", "payment_gateway"
-- Match nodeType accurately: database → "database", REST/GraphQL → "api", branching → "decision"
-- Use diverse colors: indigo #6366f1, violet #8b5cf6, cyan #06b6d4, emerald #10b981, amber #f59e0b
+Layout & Presentation Guidelines (STRICTLY ENFORCED):
+- USE A HORIZONTAL PRODUCT-FLOW ARCHITECTURE (Left to Right progression on X-axis).
+- X-axis Layers:
+  * x=0-200: Users, Clients (category: user)
+  * x=450-600: Gateways, Input Mechanisms (category: gateway, frontend)
+  * x=900-1100: Core Engines, Processing (category: ai, backend)
+  * x=1400-1600: Storage, Output, History (category: database, storage)
+- Space nodes vertically (Y-axis) by at least 250px to prevent overlap. Y-axis range: 100 to 1200.
+
+Abstraction Rules (PRODUCT WORKFLOW FOCUS):
+- FlowForge AI is an editable diagram product. When prompted to draw its architecture, DO NOT focus on low-level infrastructure (like FastAPI or MongoDB).
+- Instead, focus on the USER WORKFLOW: User Prompt -> Generation Engine -> Editable Canvas -> Manual Edit -> Incremental Update -> Version Storage.
+- Apply `"size": "large"` to the core workflow nodes (e.g., "Editable Canvas", "Incremental Update Engine") to make them visually dominant.
+- Collapse internal services into high-level modules. Optimize readability over technical completeness.
+- The `label` must be the actual high-level component or workflow step.
+- Assign the best matching `category` from the allowed list.
 """
 
 SYSTEM_PROMPT_MODIFY = """
-You are a diagram modification expert. You will receive:
+You are a Cloud Architecture Diagram Modification Expert. You will receive:
 1. A CURRENT diagram JSON with nodes and edges
 2. A modification request from the user
 
 CRITICAL RULES:
-- Return ONLY the changes — never the full diagram
-- NEVER change existing node positions or IDs
-- NEVER remove existing nodes unless the user explicitly says "remove" or "delete"
-- Place new nodes adjacent to their nearest connected node, offset by 220px minimum
-- Reference existing node IDs when creating edges to/from them
-- Use unique snake_case IDs for new nodes
+- Return ONLY the changes — never the full diagram.
+- NEVER change existing node positions or IDs.
+- NEVER remove existing nodes unless explicitly requested ("remove", "delete").
+- Place new nodes horizontally adjacent to their connected node, respecting the Left-to-Right X-axis layer architecture:
+  (user x=0, frontend x=500, backend/ai x=1000, database x=1500)
+- Space new nodes vertically (Y-axis) from existing nodes to avoid overlap.
+- Reference existing node IDs when creating edges.
+- Use unique snake_case IDs for new nodes.
+- Maintain product-flow abstractions (do not generate low-level implementation details).
 
-Return ONLY valid JSON — no markdown, no explanation:
+Return ONLY valid JSON:
 {
   "nodes_to_add": [ ...new full node objects... ],
   "edges_to_add": [ ...new full edge objects... ],
@@ -85,8 +97,6 @@ Return ONLY valid JSON — no markdown, no explanation:
   "nodes_to_remove": [ "id1", "id2" ],
   "edges_to_remove": [ "edge_id1" ]
 }
-
-If nothing to add/remove/update in a category, use an empty array [].
 """
 
 
