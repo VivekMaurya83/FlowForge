@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useDiagramStore from '../store/diagramStore';
+import useThemeStore from '../store/themeStore';
 
 export default function Navbar() {
   const {
@@ -9,6 +11,8 @@ export default function Navbar() {
     clearDiagram,
   } = useDiagramStore();
 
+  const { theme, toggleTheme } = useThemeStore();
+  const navigate = useNavigate();
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleInput, setTitleInput]     = useState(diagramTitle);
 
@@ -21,6 +25,16 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
+      {/* Back to Dashboard */}
+      <button
+        id="back-to-dashboard-btn"
+        className="nav-back-btn"
+        onClick={() => navigate('/dashboard')}
+        title="Back to My Diagrams"
+      >
+        ←
+      </button>
+
       {/* Brand */}
       <div className="navbar-brand">
         <div className="brand-logo">
@@ -85,6 +99,18 @@ export default function Navbar() {
             <span className="stat-chip">{edges.length} edges</span>
           </div>
         )}
+
+        {/* Theme toggle */}
+        <button
+          id="theme-toggle-btn"
+          className="nav-icon-btn theme-toggle-btn"
+          onClick={toggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          <span className="theme-icon">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </span>
+        </button>
 
         {/* Clear button */}
         <button

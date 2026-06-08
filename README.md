@@ -4,17 +4,20 @@ FlowForge AI is a modern, AI-powered editable diagram platform. Unlike static di
 
 ## Features
 
-- **Prompt-to-Diagram**: Generate structured node-and-edge architectures in seconds using Gemini Flash.
+- **Prompt-to-Diagram**: Generate structured node-and-edge architectures in seconds using Gemini 3 Flash.
 - **Incremental Modification**: Add components via AI prompts without overwriting your manual layouts. The backend acts as a smart diff engine.
 - **Full Canvas Control**: Drag, connect, color, and rename nodes manually (powered by React Flow).
-- **Time Travel**: Snapshot and restore specific versions of your diagrams using MongoDB Atlas.
+- **Time Travel**: Snapshot and restore specific versions of your diagrams.
+- **User Authentication**: Secure signup and login flows utilizing JWTs to protect user-specific diagrams.
+- **Dark & Light Mode**: Seamless theme switching with persistent local storage preferences.
+- **One-Click Exports**: Export your active canvas directly to PNG, SVG, or raw JSON format without watermarks.
 
 ---
 
 ## Tech Stack
 
-- **Frontend**: React + Vite, Zustand, React Flow, Vanilla CSS (Glassmorphism design)
-- **Backend**: FastAPI (Python), Motor (Async MongoDB), Google Generative AI SDK
+- **Frontend**: React + Vite, Zustand (State Management), React Flow, Vanilla CSS (Glassmorphism design), Lucide React (Icons), html-to-image (Exports)
+- **Backend**: FastAPI (Python), Motor (Async MongoDB), Google Generative AI SDK, PyJWT & passlib (Auth)
 - **Database**: MongoDB Atlas
 
 ---
@@ -47,7 +50,8 @@ Create a `.env` file in the `backend/` directory:
 GEMINI_API_KEY=your_google_gemini_key
 MONGODB_URI=mongodb+srv://your_user:your_password@cluster.mongodb.net/flowforge_db?retryWrites=true&w=majority
 DATABASE_NAME=flowforge_db
-COLLECTION_NAME=diagrams
+JWT_SECRET=your_jwt_secret_key
+JWT_ALGORITHM=HS256
 ```
 
 Run the backend server:

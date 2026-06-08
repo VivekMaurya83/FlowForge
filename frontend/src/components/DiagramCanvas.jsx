@@ -113,6 +113,15 @@ function EditableNode({ id, data, selected }) {
   const colorClass = `cat-${category}`;
   const sizeClass = data.size === 'large' ? 'node-size-large' : '';
 
+  // If the user has picked a custom colour in the sidebar, apply it inline
+  // so it overrides the default cat-* CSS class gradient.
+  const customColorStyle = data.color?.bg
+    ? {
+        background: `linear-gradient(135deg, ${data.color.bg}, ${data.color.border})`,
+        borderColor: data.color.border,
+      }
+    : {};
+
   return (
     <>
       {/* Toolbar that appears on select */}
@@ -143,6 +152,7 @@ function EditableNode({ id, data, selected }) {
       {/* Node Body */}
       <div
         className={`custom-node ${shapeClass} ${colorClass} ${sizeClass} ${selected ? 'node-selected' : ''}`}
+        style={customColorStyle}
         onDoubleClick={startEdit}
         onClick={() => setSelectedNode(id)}
       >
@@ -358,6 +368,8 @@ export default function DiagramCanvas({ onAddNode }) {
         <Controls className="flow-controls" showInteractive={false} />
         <MiniMap
           className="flow-minimap"
+          width={140}
+          height={90}
           nodeColor={(n) => {
             const colors = {
               user: '#e11d48', frontend: '#0284c7', backend: '#7c3aed',
@@ -367,7 +379,7 @@ export default function DiagramCanvas({ onAddNode }) {
             };
             return colors[n.data?.category] || '#4f46e5';
           }}
-          maskColor="rgba(10, 15, 30, 0.8)"
+          maskColor="rgba(10, 15, 30, 0.7)"
           style={{ background: '#0f172a', border: '1px solid #1e293b' }}
         />
       </ReactFlow>

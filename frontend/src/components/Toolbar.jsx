@@ -1,33 +1,31 @@
 import { useState, useCallback } from 'react';
 import useDiagramStore from '../store/diagramStore';
 import { toPng, toSvg } from 'html-to-image';
-import { 
-  Monitor, Server, Database, Sparkles, HardDrive, 
-  ShieldCheck, Bell, Network, Cloud, User 
+import {
+  Monitor, Server, Database, Sparkles, HardDrive,
+  ShieldCheck, Bell, Network, Cloud, User
 } from 'lucide-react';
 
 const NODE_TYPES = [
-  { id: 'user', label: 'User / Client', icon: <User size={14} />, description: 'End user or client application' },
-  { id: 'frontend', label: 'Frontend', icon: <Monitor size={14} />, description: 'Web or mobile interface' },
-  { id: 'backend', label: 'Backend API', icon: <Server size={14} />, description: 'Core application logic' },
-  { id: 'database', label: 'Database', icon: <Database size={14} />, description: 'Data storage' },
-  { id: 'storage', label: 'Cloud Storage', icon: <HardDrive size={14} />, description: 'Object or file storage' },
-  { id: 'ai', label: 'AI Service', icon: <Sparkles size={14} />, description: 'LLM or ML model' },
-  { id: 'gateway', label: 'API Gateway', icon: <Network size={14} />, description: 'Routing and rate limiting' },
-  { id: 'security', label: 'Auth / Security', icon: <ShieldCheck size={14} />, description: 'Authentication provider' },
-  { id: 'notification', label: 'Notification', icon: <Bell size={14} />, description: 'Email or SMS service' },
-  { id: 'cloud', label: 'External Cloud', icon: <Cloud size={14} />, description: 'Third-party cloud service' },
+  { id: 'user',         label: 'User / Client',   icon: <User size={15} />,       description: 'End user or client application' },
+  { id: 'frontend',    label: 'Frontend',         icon: <Monitor size={15} />,    description: 'Web or mobile interface' },
+  { id: 'backend',     label: 'Backend API',      icon: <Server size={15} />,     description: 'Core application logic' },
+  { id: 'database',    label: 'Database',         icon: <Database size={15} />,   description: 'Data storage' },
+  { id: 'storage',     label: 'Cloud Storage',    icon: <HardDrive size={15} />,  description: 'Object or file storage' },
+  { id: 'ai',          label: 'AI Service',       icon: <Sparkles size={15} />,   description: 'LLM or ML model' },
+  { id: 'gateway',     label: 'API Gateway',      icon: <Network size={15} />,    description: 'Routing and rate limiting' },
+  { id: 'security',    label: 'Auth / Security',  icon: <ShieldCheck size={15} />,description: 'Authentication provider' },
+  { id: 'notification',label: 'Notification',     icon: <Bell size={15} />,       description: 'Email or SMS service' },
+  { id: 'cloud',       label: 'External Cloud',   icon: <Cloud size={15} />,      description: 'Third-party cloud service' },
 ];
 
 export default function Toolbar({ onAddNode }) {
-  const [selectedType, setSelectedType] = useState('service');
+  const [selectedType, setSelectedType] = useState('user');
   const [isExpanded, setIsExpanded] = useState(true);
   const { clearDiagram, nodes, edges } = useDiagramStore();
 
   const handleAddNode = useCallback(() => {
-    if (onAddNode) {
-      onAddNode(selectedType);
-    }
+    if (onAddNode) onAddNode(selectedType);
   }, [selectedType, onAddNode]);
 
   const handleExportJson = useCallback(() => {
@@ -45,20 +43,31 @@ export default function Toolbar({ onAddNode }) {
   const handleExportImage = useCallback(async (format) => {
     const element = document.querySelector('.react-flow');
     if (!element) return;
-    
     try {
-      // Temporarily hide controls for export
-      const controls = element.querySelector('.flow-controls');
-      const minimap = element.querySelector('.flow-minimap');
-      if (controls) controls.style.display = 'none';
-      if (minimap) minimap.style.display = 'none';
+      // Detect current theme for correct background colour
+      const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+      const bgColor = isDark ? '#060a14' : '#f0f4ff';
 
-      const dataUrl = format === 'png' 
-        ? await toPng(element, { backgroundColor: '#0f172a' })
-        : await toSvg(element, { backgroundColor: '#0f172a' });
-        
-      if (controls) controls.style.display = '';
-      if (minimap) minimap.style.display = '';
+      // Hide UI chrome that shouldn't appear in exports
+      const controls     = element.querySelector('.flow-controls');
+      const minimap      = element.querySelector('.flow-minimap');
+      const background   = element.querySelector('.react-flow__background');
+      const attribution  = element.querySelector('.react-flow__attribution');
+
+      if (controls)    controls.style.display    = 'none';
+      if (minimap)     minimap.style.display      = 'none';
+      if (background)  background.style.display   = 'none';
+      if (attribution) attribution.style.display  = 'none';
+
+      const dataUrl = format === 'png'
+        ? await toPng(element, { backgroundColor: bgColor })
+        : await toSvg(element, { backgroundColor: bgColor });
+
+      // Restore hidden elements
+      if (controls)    controls.style.display    = '';
+      if (minimap)     minimap.style.display      = '';
+      if (background)  background.style.display   = '';
+      if (attribution) attribution.style.display  = '';
 
       const a = document.createElement('a');
       a.href = dataUrl;
@@ -71,15 +80,15 @@ export default function Toolbar({ onAddNode }) {
   }, []);
 
   return (
-    <aside className="toolbar-panel">
+    <aside className={`toolbar-panel ${!isExpanded ? 'collapsed' : ''}`}>
       {/* Header */}
       <div className="toolbar-header">
-        <span className="toolbar-title">Architecture</span>
+        {isExpanded && <span className="toolbar-title">Architecture</span>}
         <button
           id="toolbar-toggle"
-          className="icon-btn"
+          className="icon-btn toolbar-collapse-btn"
           onClick={() => setIsExpanded(!isExpanded)}
-          title={isExpanded ? 'Collapse' : 'Expand'}
+          title={isExpanded ? 'Collapse panel' : 'Expand panel'}
         >
           {isExpanded ? '◀' : '▶'}
         </button>
@@ -87,8 +96,8 @@ export default function Toolbar({ onAddNode }) {
 
       {isExpanded && (
         <>
-          {/* Node Types */}
-          <div className="toolbar-section" style={{ maxHeight: '40vh', overflowY: 'auto' }}>
+          {/* ── Components section ── */}
+          <div className="toolbar-section">
             <p className="section-label">Components</p>
             <div className="node-type-list">
               {NODE_TYPES.map((nt) => (
@@ -106,8 +115,8 @@ export default function Toolbar({ onAddNode }) {
             </div>
           </div>
 
-          {/* Add Node */}
-          <div className="toolbar-section">
+          {/* ── Add Component CTA ── */}
+          <div className="toolbar-add-row">
             <button
               id="add-node-btn"
               className="primary-btn full-width"
@@ -117,53 +126,44 @@ export default function Toolbar({ onAddNode }) {
             </button>
           </div>
 
-          {/* Divider */}
           <div className="toolbar-divider" />
 
-          {/* Actions */}
-          <div className="toolbar-section">
-            <p className="section-label">Export & Actions</p>
-            <button
-              className="secondary-btn full-width"
-              onClick={() => handleExportImage('png')}
-              title="Export diagram as PNG image"
-            >
-              🖼️ Export PNG
-            </button>
-            <button
-              className="secondary-btn full-width"
-              onClick={() => handleExportImage('svg')}
-              title="Export diagram as vector SVG"
-            >
-              📐 Export SVG
-            </button>
-            <button
-              id="export-btn"
-              className="secondary-btn full-width"
-              onClick={handleExportJson}
-              title="Export diagram as raw JSON"
-            >
-              ↓ Export JSON
-            </button>
-            <button
-              id="clear-diagram-btn"
-              className="danger-btn full-width"
-              onClick={() => {
-                if (window.confirm('Clear all components and connections?')) {
-                  clearDiagram();
-                }
-              }}
-              title="Clear entire diagram"
-              style={{ marginTop: '4px' }}
-            >
-              ✕ Clear All
-            </button>
+          {/* ── Export section ── */}
+          <div className="toolbar-section toolbar-section-sm">
+            <p className="section-label">Export</p>
+            <div className="export-btn-row">
+              <button
+                className="export-icon-btn"
+                onClick={() => handleExportImage('png')}
+                title="Export as PNG image"
+              >
+                <span className="export-icon">🖼️</span>
+                <span>PNG</span>
+              </button>
+              <button
+                className="export-icon-btn"
+                onClick={() => handleExportImage('svg')}
+                title="Export as vector SVG"
+              >
+                <span className="export-icon">📐</span>
+                <span>SVG</span>
+              </button>
+              <button
+                id="export-btn"
+                className="export-icon-btn"
+                onClick={handleExportJson}
+                title="Export as raw JSON"
+              >
+                <span className="export-icon">{ '{}'}</span>
+                <span>JSON</span>
+              </button>
+            </div>
           </div>
 
-          {/* Stats */}
           <div className="toolbar-divider" />
-          <div className="toolbar-section">
-            <p className="section-label">Stats</p>
+
+          {/* ── Stats ── */}
+          <div className="toolbar-section toolbar-section-sm">
             <div className="stats-grid">
               <div className="stat-card">
                 <span className="stat-value">{nodes.length}</span>
@@ -174,6 +174,24 @@ export default function Toolbar({ onAddNode }) {
                 <span className="stat-label">Edges</span>
               </div>
             </div>
+          </div>
+
+          <div className="toolbar-divider" />
+
+          {/* ── Danger zone ── */}
+          <div className="toolbar-section toolbar-section-sm">
+            <button
+              id="clear-diagram-btn"
+              className="danger-btn full-width"
+              onClick={() => {
+                if (window.confirm('Clear all components and connections?')) {
+                  clearDiagram();
+                }
+              }}
+              title="Clear entire diagram"
+            >
+              ✕ Clear All
+            </button>
           </div>
         </>
       )}
