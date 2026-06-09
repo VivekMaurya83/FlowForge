@@ -15,29 +15,56 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0f172a' }}>
-      <form onSubmit={handleSubmit} style={{ background: '#1e293b', padding: '2rem', borderRadius: '8px', width: '300px' }}>
-        <h2 style={{ color: 'white', marginBottom: '1rem', textAlign: 'center' }}>Login to FlowForge</h2>
-        {error && <div style={{ color: '#ef4444', marginBottom: '1rem', fontSize: '14px' }}>{error}</div>}
-        
-        <input 
-          type="email" placeholder="Email" required 
-          value={email} onChange={e => setEmail(e.target.value)}
-          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', background: '#334155', border: 'none', color: 'white', borderRadius: '4px' }} 
-        />
-        <input 
-          type="password" placeholder="Password" required 
-          value={password} onChange={e => setPassword(e.target.value)}
-          style={{ width: '100%', padding: '0.5rem', marginBottom: '1rem', background: '#334155', border: 'none', color: 'white', borderRadius: '4px' }} 
-        />
-        
-        <button type="submit" disabled={isLoading} style={{ width: '100%', padding: '0.5rem', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          {isLoading ? 'Logging in...' : 'Login'}
-        </button>
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <Link to="/signup" style={{ color: '#94a3b8', fontSize: '14px' }}>Need an account? Sign up</Link>
+    <div className="auth-page">
+      <div className="landing-bg">
+        <div className="glow-orb orb-1" />
+        <div className="glow-orb orb-2" />
+        <div className="bg-grid-overlay" />
+      </div>
+      
+      <div className="auth-container">
+        <div className="auth-card">
+          <div className="auth-header">
+            <div className="brand-logo" style={{ width: 48, height: 48, margin: '0 auto 1.25rem' }}>
+              <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="8" fill="url(#dbLogoGrad)" />
+                <path d="M8 14 L12 10 L16 14 L20 10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 18 L12 14 L16 18 L20 14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.6" />
+              </svg>
+            </div>
+            <h2>Welcome back</h2>
+            <p>Log in to your FlowForge account</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="auth-form">
+            {error && <div className="auth-error">⚠ {error}</div>}
+            
+            <div className="input-group">
+              <label>Email Address</label>
+              <input 
+                type="email" placeholder="you@example.com" required 
+                value={email} onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            
+            <div className="input-group">
+              <label>Password</label>
+              <input 
+                type="password" placeholder="••••••••" required 
+                value={password} onChange={e => setPassword(e.target.value)}
+              />
+            </div>
+            
+            <button type="submit" className="cta-primary auth-submit" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Log In'}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <p>Don't have an account? <Link to="/signup">Sign up for free</Link></p>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

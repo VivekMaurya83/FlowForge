@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+
 // Create an axios instance for authenticated requests
 export const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',
+  baseURL: API_URL,
 });
 
 // Interceptor to add token to headers
@@ -29,7 +31,7 @@ const useAuthStore = create((set, get) => ({
       formData.append('username', email); // OAuth2 expects username
       formData.append('password', password);
 
-      const res = await axios.post('http://127.0.0.1:8000/api/auth/login', formData, {
+      const res = await axios.post(`${API_URL}/auth/login`, formData, {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       });
       
@@ -53,7 +55,7 @@ const useAuthStore = create((set, get) => ({
   signup: async (name, email, password) => {
     set({ isLoading: true, error: null });
     try {
-      await axios.post('http://127.0.0.1:8000/api/auth/signup', {
+      await axios.post(`${API_URL}/auth/signup`, {
         name, email, password
       });
       

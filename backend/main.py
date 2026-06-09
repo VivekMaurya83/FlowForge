@@ -36,14 +36,7 @@ app = FastAPI(
 # CORS — allow frontend dev server + Vercel
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        # Add your Vercel URL here before deploying
-        # "https://flowforge-ai.vercel.app",
-    ],
+    allow_origins=["*"], # Allow any frontend domain (e.g. Vercel) in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
