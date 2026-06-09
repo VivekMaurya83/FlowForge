@@ -1,7 +1,11 @@
 import { create } from 'zustand';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+// Ensure the API URL always ends with /api, even if the user forgot it in their Vercel env settings
+let rawUrl = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+// Remove trailing slash if present, then append /api if missing
+rawUrl = rawUrl.replace(/\/$/, '');
+const API_URL = rawUrl.endsWith('/api') ? rawUrl : `${rawUrl}/api`;
 
 // Create an axios instance for authenticated requests
 export const api = axios.create({
